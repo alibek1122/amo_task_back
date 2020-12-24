@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  app:
+    container_name: amo_notifier_app
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      # убрать при необходимости
+      - ./app:/srv/app:rw,cached
+
+  nginx:
+    container_name: amo_notifier_nginx
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    ports:
+      - '${NGINX_CONTAINER_PORT}:80'
+    volumes:
+      # убрать при необходимости
+      - ./app/public:/srv/app:rw,cached
+    depends_on:
+      - app
+
+  mysql:
+    image: mariadb:latest
+    ports:
+      - 8889:3306
+    container_name: amo_notifier_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  myadmin:
+    container_name: amo_notifier_myadmin
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+      PMA_ABSOLUTE_URI: /myadmin/
